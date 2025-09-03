@@ -40,6 +40,8 @@ void draw() {
     }
 
     // draw
+    stroke(200);
+    fill(200);
     circle(p.position.x, p.position.y, p.radius);
   }
 }
