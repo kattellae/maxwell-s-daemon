@@ -5,15 +5,30 @@ class Point {
   }
   PVector position;
   PVector velocity;
-  float radius = 25;
+  float radius = 15;
 }
 
 Point[] points = new Point[2];
 
+boolean collide(Point a, Point b) {
+  float dist = a.position.dist(b.position);
+  if (dist < a.radius + b.radius) {
+    float prox = dist/(a.radius + b.radius);
+    float force = 1/prox - 1;
+
+    PVector impact = PVector.sub(a.position, b.position);
+    impact.setMag(force);
+    a.velocity.add(impact);
+    b.velocity.sub(impact);
+    return true;
+  }
+  return false;
+}
+
 void setup() {
   size(1000, 1000);
   frameRate(200);
-  points[0] = new Point(new PVector(200, 500), new PVector(1, 0));
+  points[0] = new Point(new PVector(200, 510), new PVector(0, 0));
   points[1] = new Point(new PVector(800, 500), new PVector(-1, 0));
 }
 
@@ -38,10 +53,27 @@ void draw() {
       if (p.position.y >= height) p.position.y = height - 1;
       p.velocity.y *= -1;
     }
+  }
 
+
+  for (int i = 0; i < points.length; i++) {
+    Point p = points[i];
+    for (int j = i + 1; j < points.length; j++) {
+      Point o = points[j];
+      collide(p, o);
+    }
+  }
+ // calc total enegry
+  float totalEnergy = 0;
+
+  for (int i = 0; i < points.length; i++) {
+    Point p = points[i];
+    totalEnergy += (p.velocity.mag() * p.velocity.mag());
     // draw
     stroke(200);
     fill(200);
-    circle(p.position.x, p.position.y, p.radius);
+    circle(p.position.x, p.position.y, p.radius*2);
   }
+  println("Total energy: " + totalEnergy);
+ 
 }
