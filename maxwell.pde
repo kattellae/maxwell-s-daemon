@@ -5,10 +5,8 @@ class Point {
   }
   PVector position;
   PVector velocity;
-  float radius = 15;
+  float radius = 8;
 }
-
-Point[] points = new Point[2];
 
 boolean collide(Point a, Point b) {
   float dist = a.position.dist(b.position);
@@ -25,11 +23,21 @@ boolean collide(Point a, Point b) {
   return false;
 }
 
+Point[] points = new Point[225];
+
 void setup() {
   size(1000, 1000);
   frameRate(200);
-  points[0] = new Point(new PVector(200, 510), new PVector(0, 0));
-  points[1] = new Point(new PVector(800, 500), new PVector(-1, 0));
+  //points[0] = new Point(new PVector(200, 510), new PVector(0, 0));
+  //points[1] = new Point(new PVector(800, 500), new PVector(-1, 0));
+  int rowCount = (int)sqrt(points.length);
+  float space = width / rowCount;
+  for (int i = 0; i < points.length; i++) {
+    int row = i / rowCount;
+    int col = i %  rowCount;
+    points[i] = new Point(new PVector(col * space + space / 2, row * space + space / 2), new PVector(1, 0));
+    points[i].velocity.setHeading(random(2*PI));
+  }
 }
 
 void draw() {
@@ -40,7 +48,7 @@ void draw() {
 
     // move
     p.position.add(p.velocity);
-
+    //p.velocity.y += 0.005;
     // wall baunce
     if (p.position.x < 0 || p.position.x >= width) {
       if (p.position.x < 0) p.position.x = 0;
@@ -63,7 +71,7 @@ void draw() {
       collide(p, o);
     }
   }
- // calc total enegry
+  // calc total enegry
   float totalEnergy = 0;
 
   for (int i = 0; i < points.length; i++) {
@@ -75,5 +83,4 @@ void draw() {
     circle(p.position.x, p.position.y, p.radius*2);
   }
   println("Total energy: " + totalEnergy);
- 
 }
