@@ -41,8 +41,13 @@ void setup() {
   }
 }
 
-void draw() {
+
+
+  void draw() {
   background(50);
+  
+  //daemon 
+    rect(width / 2, 0, 16, height);
 
   float maxSpeed = 0;
 
