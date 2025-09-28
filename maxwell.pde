@@ -23,11 +23,12 @@ boolean collide(Point a, Point b) {
   return false;
 }
 
-Point[] points = new Point[225];
+Point[] points = new Point[400];
+int[] hist = new int[16];
 
 void setup() {
-  size(1000, 1000);
-  frameRate(200);
+  size(1600, 1600);
+  frameRate(100);
   //points[0] = new Point(new PVector(200, 510), new PVector(0, 0));
   //points[1] = new Point(new PVector(800, 500), new PVector(-1, 0));
   int rowCount = (int)sqrt(points.length);
@@ -43,12 +44,19 @@ void setup() {
 void draw() {
   background(50);
 
+  float maxSpeed = 0;
+
+  for (int i = 0; i < hist.length; ++i) {
+    hist[i] = 0;
+  }
+
   for (int i = 0; i < points.length; i++) {
     Point p = points[i];
 
     // move
     p.position.add(p.velocity);
     //p.velocity.y += 0.005;
+
     // wall baunce
     if (p.position.x < 0 || p.position.x >= width) {
       if (p.position.x < 0) p.position.x = 0;
@@ -60,6 +68,10 @@ void draw() {
       if (p.position.y < 0) p.position.y = 0;
       if (p.position.y >= height) p.position.y = height - 1;
       p.velocity.y *= -1;
+    }
+    // find min/max speed
+    if (p.velocity.mag() > maxSpeed) {
+      maxSpeed = p.velocity.mag();
     }
   }
 
@@ -75,12 +87,25 @@ void draw() {
   float totalEnergy = 0;
 
   for (int i = 0; i < points.length; i++) {
+
     Point p = points[i];
+    // fill historgam
+    int index = (int)map(p.velocity.mag(), 0, maxSpeed, 0, hist.length);
+    if (index >= hist.length) {
+      index = 15;
+    }
+    hist[index]++;
+    // calc total energy
     totalEnergy += (p.velocity.mag() * p.velocity.mag());
     // draw
     stroke(200);
     fill(200);
     circle(p.position.x, p.position.y, p.radius*2);
   }
-  println("Total energy: " + totalEnergy);
+
+  for (int i = 0; i < hist.length; ++i) {
+    rect(0, 12*i, hist[i]*10, 10);
+  }
+
+  println("Total energy: " + totalEnergy + ", max: " + maxSpeed);
 }
