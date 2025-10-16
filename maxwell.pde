@@ -5,8 +5,10 @@ class Point {
   }
   PVector position;
   PVector velocity;
-  float radius = 8;
+  final static float radius = 8;
 }
+
+int fpsDivider = 1;
 
 boolean collide(Point a, Point b) {
   float dist = a.position.dist(b.position);
@@ -41,15 +43,18 @@ void setup() {
   }
 }
 
+boolean daemonActive = false;
+float maxPointEnergy = 0;
+float maxSpeed = 0;
 
-
-  void draw() {
+void draw() {
   background(50);
-  
-  //daemon 
-    rect(width / 2, 0, 16, height);
+  fill(200);
 
-  float maxSpeed = 0;
+  //daemon
+  if (daemonActive) {
+    rect(width / 2 - 8, 0, 8, height);
+  }
 
   for (int i = 0; i < hist.length; ++i) {
     hist[i] = 0;
@@ -59,8 +64,7 @@ void setup() {
     Point p = points[i];
 
     // move
-    p.position.add(p.velocity);
-    //p.velocity.y += 0.005;
+    p.position.add(p.velocity.div(fpsDivider));
 
     // wall baunce
     if (p.position.x < 0 || p.position.x >= width) {
@@ -74,12 +78,17 @@ void setup() {
       if (p.position.y >= height) p.position.y = height - 1;
       p.velocity.y *= -1;
     }
-    // find min/max speed
-    if (p.velocity.mag() > maxSpeed) {
-      maxSpeed = p.velocity.mag();
+
+    // calc daemon work
+    if ((p.position.x > width / 2 - 8) && (p.position.x < width / 2 + 8) && daemonActive) {
+      if ((p.velocity.x > 0 && p.velocity.mag() < maxSpeed / 2)
+        || (p.velocity.x < 0 && p.velocity.mag() > maxSpeed / 2)) { // движемся вправо
+        // отскок
+        p.velocity.x *= -1;
+      }
     }
   }
-
+  maxSpeed = 0;
 
   for (int i = 0; i < points.length; i++) {
     Point p = points[i];
@@ -87,9 +96,22 @@ void setup() {
       Point o = points[j];
       collide(p, o);
     }
+        // find min/max speed
+    if (p.velocity.mag() > maxSpeed) {
+      maxSpeed = p.velocity.mag();
+    }
   }
+  
+  if (maxSpeed > 8) {
+    fpsDivider *= 2;
+  }
+
   // calc total enegry
   float totalEnergy = 0;
+  float coldEnergy = 0;
+  float hotEnergy = 0;
+  int coldP = 0;
+  int hotP = 0;
 
   for (int i = 0; i < points.length; i++) {
 
@@ -101,16 +123,40 @@ void setup() {
     }
     hist[index]++;
     // calc total energy
-    totalEnergy += (p.velocity.mag() * p.velocity.mag());
+    float e = p.velocity.mag() * p.velocity.mag();
+    if (maxPointEnergy < e) {
+      maxPointEnergy = e;
+    }
+    totalEnergy += e;
+    if (p.position.x > width/2) {
+      hotEnergy += e;
+      hotP++;
+    } else {
+      coldEnergy += e;
+      coldP++;
+    }
     // draw
     stroke(200);
-    fill(200);
+
+    fill(map(e, 0, maxPointEnergy, 50, 250));
     circle(p.position.x, p.position.y, p.radius*2);
+    fill(250);
+    textSize(64);
   }
+  text(coldEnergy/coldP, 40, height - 100);
+  text(hotEnergy/hotP, width/2 + 40, height - 100);
+
 
   for (int i = 0; i < hist.length; ++i) {
     rect(0, 12*i, hist[i]*10, 10);
   }
 
-  println("Total energy: " + totalEnergy + ", max: " + maxSpeed);
+  println("Total energy: " + totalEnergy + ", max: " + maxSpeed + ", world slow x" + fpsDivider);
+}
+
+
+void keyPressed() {
+  if (key == ' ') {
+    daemonActive = true;
+  }
 }
