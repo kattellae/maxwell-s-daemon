@@ -46,6 +46,9 @@ void setup() {
 boolean daemonActive = false;
 float maxPointEnergy = 0;
 float maxSpeed = 0;
+float avgSpeed = 0;
+float threshold = 0;
+int mode = 0;
 
 void draw() {
   background(50);
@@ -79,10 +82,32 @@ void draw() {
       p.velocity.y *= -1;
     }
 
+    switch(mode) {
+    case 0:
+      threshold = maxSpeed / 2;
+      break;
+    case 1:
+      threshold = avgSpeed;
+      break;
+    case 2:
+      int bucketIndex = 0;
+      int pCount = 0;
+
+      for (int j = 0; j < hist.length; ++j) {
+        if (hist[j] > pCount) {
+          bucketIndex = j;
+          pCount = hist[j];
+        }
+      }
+      threshold = (maxSpeed * bucketIndex) / hist.length;
+      
+      break;
+    }
+
     // calc daemon work
     if ((p.position.x > width / 2 - 8) && (p.position.x < width / 2 + 8) && daemonActive) {
-      if ((p.velocity.x > 0 && p.velocity.mag() < maxSpeed / 2)
-        || (p.velocity.x < 0 && p.velocity.mag() > maxSpeed / 2)) { // движемся вправо
+      if ((p.velocity.x > 0 && p.velocity.mag() < threshold)
+        || (p.velocity.x < 0 && p.velocity.mag() > threshold)) { // движемся вправо
         // отскок
         p.velocity.x *= -1;
       }
@@ -96,12 +121,12 @@ void draw() {
       Point o = points[j];
       collide(p, o);
     }
-        // find min/max speed
+    // find min/max speed
     if (p.velocity.mag() > maxSpeed) {
       maxSpeed = p.velocity.mag();
     }
   }
-  
+
   if (maxSpeed > 8) {
     fpsDivider *= 2;
   }
@@ -113,9 +138,11 @@ void draw() {
   int coldP = 0;
   int hotP = 0;
 
+  avgSpeed = 0;
   for (int i = 0; i < points.length; i++) {
 
     Point p = points[i];
+    avgSpeed += p.velocity.mag();
     // fill historgam
     int index = (int)map(p.velocity.mag(), 0, maxSpeed, 0, hist.length);
     if (index >= hist.length) {
@@ -143,6 +170,7 @@ void draw() {
     fill(250);
     textSize(64);
   }
+  avgSpeed /= points.length;
   text(coldEnergy/coldP, 40, height - 100);
   text(hotEnergy/hotP, width/2 + 40, height - 100);
 
@@ -150,6 +178,18 @@ void draw() {
   for (int i = 0; i < hist.length; ++i) {
     rect(0, 12*i, hist[i]*10, 10);
   }
+    switch(mode) {
+    case 0:
+      text("Max/2", width - 200, 50);
+      break;
+    case 1:
+      text("AVG", width - 200, 50);
+      break;
+    case 2:
+      text("Mode", width - 200, 50);
+      break;
+    }
+  
 
   println("Total energy: " + totalEnergy + ", max: " + maxSpeed + ", world slow x" + fpsDivider);
 }
@@ -158,5 +198,12 @@ void draw() {
 void keyPressed() {
   if (key == ' ') {
     daemonActive = true;
+  } else if (key == '0') {
+    mode = 0;
+  }else if (key == '1') {
+    mode = 1;
+  }
+  else if (key == '2') {
+    mode = 2;
   }
 }
